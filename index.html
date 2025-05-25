@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CrashOut</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            color: white;
+            font-family: "Segoe UI", Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid #333;
+            margin: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            background: #000;
+            cursor: none;
+            border-radius: 10px;
+        }
+        #gameStats {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            min-width: 600px;
+            justify-content: center;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(26, 26, 26, 0.95) 100%);
+            display: flex;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+        .start-content {
+            flex: 1;
+            padding-left: 10%;
+            padding-top: 2%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            max-width: 60%;
+        }
+        .player-preview {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding-right: 0;
+            padding-left: 0;
+            margin-right: 5%;
+        }
+        .player-preview img {
+            width: 350px;
+            height: 260px;
+            object-fit: contain;
+            animation: floatAnimation 3s ease-in-out infinite;
+        }
+        @keyframes floatAnimation {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        #startScreen h1 {
+            color: #64B5F6;
+            font-size: 48px;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        .game-brief {
+            color: #fff;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            max-width: 600px;
+        }
+        .instructions-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 800px;
+            margin-bottom: 25px;
+        }
+        .game-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 240px);
+            gap: 15px;
+        }
+        .bento-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+        }
+        .bento-box:hover {
+            transform: translateY(-3px);
+        }
+        .bento-box h2 {
+            color: #64B5F6;
+            font-size: 22px;
+            margin: 0 0 12px 0;
+            letter-spacing: 1px;
+        }
+        .bento-box ul {
+            color: #fff;
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .bento-box li {
+            margin: 8px 0;
+            line-height: 1.4;
+            padding-left: 20px;
+            position: relative;
+            font-size: 15px;
+        }
+        .bento-box li::before {
+            content: '•';
+            position: absolute;
+            left: 8px;
+            color: #64B5F6;
+        }
+        .highlight {
+            color: #FFD700;
+            font-weight: 600;
+        }
+        .tip-box {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: auto;
+            min-height: 80px;
+            padding: 15px 20px;
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .tip-box p {
+            margin: 0;
+            color: #fff;
+            font-size: 15px;
+        }
+        #startButton {
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 12px 35px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            font-family: "Segoe UI", Arial, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 160px;
+            height: 48px;
+        }
+        #startButton:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        #startButton:active {
+            transform: translateY(1px);
+        }
+        .stage {
+            color: #64B5F6;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(100, 181, 246, 0.1);
+            border: 1px solid rgba(100, 181, 246, 0.2);
+            min-width: 80px;
+            text-align: center;
+        }
+        .timer {
+            color: #64B5F6;
+            font-weight: 500;
+        }
+        .score {
+            color: #FFD700;
+            font-weight: 500;
+        }
+        .final-sprint {
+            color: #ff9800;
+            animation: pulse 1s infinite;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+        .health-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .health-bar-container {
+            width: 100px;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .health-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+            border-radius: 4px;
+        }
+        .stat-divider {
+            color: rgba(255, 255, 255, 0.2);
+            margin: 0 5px;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .restart-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .restart-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+        .loading-container {
+            width: 300px;
+            text-align: center;
+        }
+        .loading-text {
+            color: #64B5F6;
+            font-size: 24px;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .loading-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(100, 181, 246, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #64B5F6;
+            border-radius: 2px;
+            transition: width 0.8s ease-out;
+        }
+        @keyframes loadingPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body data-new-gr-c-s-check-loaded="14.1235.0" data-gr-ext-installed>
+    <div id="startScreen">
+        <div class="start-content">
+            <h1>CrashOut</h1>
+            <p class="game-brief">Welcome to CrashOut! Your mission is to make sure the screen is clear of the blocks.</p>
+            <div class="instructions-container">
+                <div class="game-controls">
+                    <div class="bento-box">
+                        <h2>Controls</h2>
+                        <ul>
+                            <li>Move your <span class="highlight">avatar</span> with the mouse</li>
+                            <li>Push blocks to clear them off screen</li>
+                        </ul>
+                    </div>
+                    <div class="bento-box">
+                        <h2>Objectives</h2>
+                        <ul>
+                            <li>Clear <span class="highlight">all blocks</span> before time runs out</li>
+                            <li>Survive as long as possible</li>
+                        </ul>
+                    </div>
+                    <div class="bento-box">
+                        <h2>Challenges</h2>
+                        <ul>
+                            <li>Watch out for <span class="highlight">red blocks</span></li>
+                            <li>They will actively chase you!</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bento-box tip-box">
+                    <h2>Pro Tip</h2>
+                    <p>Use quick mouse movements to push blocks more forcefully!</p>
+                </div>
+            </div>
+            <button id="startButton">Start Game</button>
+        </div>
+        <div class="player-preview">
+            <img src="player.png" alt="Player Avatar">
+        </div>
+    </div>
+    <div id="gameStats">
+        <span class="stage">STAGE 1</span>
+        <span class="stat-divider">|</span>
+        <span class="timer">Time: <span id="timer">20</span>s</span>
+        <span class="stat-divider">|</span>
+        <span class="score">Score: <span id="score">0</span></span>
+        <span class="stat-divider">|</span>
+        <div class="health-bar">
+            Health:
+            <div class="health-bar-container">
+                <div class="health-bar-fill" style="width: 100%; background: #2ecc71;"></div>
+            </div>
+        </div>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-container">
+            <div class="loading-text">Loading Game...</div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('startButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingProgress = document.getElementById('loadingProgress');
+            const startScreen = document.getElementById('startScreen');
+
+            loadingOverlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                loadingProgress.style.width = '100%';
+            }, 100);
+
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                startScreen.style.display = 'none';
+                initializeGame();
+            }, 1000);
+        });
+    </script>
+    <script src="sounds.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

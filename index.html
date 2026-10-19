@@ -230,20 +230,23 @@
             .player-preview img, .player-preview::after, .start-content { animation: none; }
         }
 
-        /* ================= Game (no frame: HUD floats above an open play area) ================= */
+        /* ================= Game (HUD + canvas as one card) ================= */
         .game-shell {
             display: flex;
             flex-direction: column;
-            gap: 4px;
         }
 
         #gameStats {
             width: 804px; /* canvas 800px + 2px border each side */
-            height: 40px;
+            height: 48px;
             display: flex;
             align-items: center;
             gap: 28px;
-            padding: 0 4px;
+            padding: 0 20px;
+            background: var(--panel);
+            border: 2px solid var(--line);
+            border-bottom: none;
+            border-radius: 16px 16px 0 0;
             font-size: 13px;
             color: var(--muted);
             font-variant-numeric: tabular-nums;
@@ -326,18 +329,12 @@
         canvas {
             display: block;
             margin: 0;
-            border: 2px solid transparent;
+            border: 2px solid var(--line);
+            border-radius: 0 0 16px 16px;
             cursor: none;
-            background: transparent;
-            /* soft edges so blocks fade in and out instead of popping at a hard line */
-            -webkit-mask-image:
-                linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent),
-                linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 36px), transparent);
-            -webkit-mask-composite: source-in;
-            mask-image:
-                linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent),
-                linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 36px), transparent);
-            mask-composite: intersect;
+            background:
+                radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 24px 24px,
+                #0f0f11;
         }
 
         /* ================= Loading overlay ================= */

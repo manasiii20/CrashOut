@@ -98,6 +98,9 @@ const STOP_SPAWN_TIME = 2; // Changed from 5 to 2 seconds for more challenge
 const INITIAL_SAFE_DISTANCE = 150; // Safe radius around player at start
 const MOUSE_SENSITIVITY = 0.7; // Reduce mouse movement speed
 const PUSH_POWER = 1.2; // Reduce push power from 2 to 1.2
+const PLAYER_HIT_RADIUS = 30; // Damage zone around the frog's body (pushing still uses player.radius)
+const HIT_DAMAGE = 0.5; // 5% of max health per hit
+const HIT_INVINCIBILITY_FRAMES = 90; // Short safe window after each hit
 
 // Load player image
 const playerImage = new Image();
@@ -516,23 +519,18 @@ function checkCollisions() {
     }
 
     for (let block of blocks) {
-        if (block.checkCollision(player.x, player.y, player.radius)) {
-            const relativeVelocityX = block.velocity.x - mouseSpeed.x;
-            const relativeVelocityY = block.velocity.y - mouseSpeed.y;
+        if (block.checkCollision(player.x, player.y, PLAYER_HIT_RADIUS)) {
+            // A hit counts when the block is moving into the frog. Blocks the
+            // frog has just pushed are moving away from it and don't hurt.
             const dx = player.x - block.x;
             const dy = player.y - block.y;
-            const dotProduct = (relativeVelocityX * dx + relativeVelocityY * dy);
+            const movingTowardPlayer = (block.velocity.x * dx + block.velocity.y * dy) > 0;
            
-            const blockSpeed = Math.sqrt(block.velocity.x * block.velocity.x + block.velocity.y * block.velocity.y);
-            const playerPushSpeed = Math.sqrt(mouseSpeed.x * mouseSpeed.x + mouseSpeed.y * mouseSpeed.y);
-           
-            if (dotProduct > 0 && blockSpeed > 1.5 && playerPushSpeed < 1.0) {
-                if (blockSpeed >= 2.0) {
-                    playerHealth -= 0.5;
-                    soundManager.playDamage(); // Play damage sound
-                }
+            if (movingTowardPlayer) {
+                playerHealth = Math.max(0, playerHealth - HIT_DAMAGE);
+                soundManager.playDamage(); // Play damage sound
                
-                invincibilityFrames = 120;
+                invincibilityFrames = HIT_INVINCIBILITY_FRAMES;
                 updateGameStats();
                
                 if (playerHealth <= 0) {

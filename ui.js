@@ -17,6 +17,8 @@
     const BUTTON_WIDTH = 140;
     const BUTTON_HEIGHT = 40;
 
+    const BLOCK_DRAW_SCALE = 0.88;
+
     function display(weight, size) {
         return `${weight} ${size}px ${DISPLAY}`;
     }
@@ -60,6 +62,9 @@
         if (this.isInDeathAnimation && this.currentScale) {
             ctx.scale(this.currentScale, this.currentScale);
         }
+
+        // Drawn slightly smaller than the block's real size (visual only).
+        ctx.scale(BLOCK_DRAW_SCALE, BLOCK_DRAW_SCALE);
 
         const w = this.width;
         const h = this.height;
@@ -161,4 +166,96 @@
 
         drawRestartButton(MUTED, 'Back to Menu');
     };
+
+    // ---- Health bar: animate changes instead of jumping ----
+    // game.js rebuilds the stats bar (with the new health width) on every hit
+    // and every second. This only animates the bar from the previously shown
+    // value to the new one; it never changes the health value itself.
+    const statsDiv = document.getElementById('gameStats');
+    const FILL_MS = 600;     // bar slides to the new value
+    const GHOST_DELAY = 350; // lost chunk lingers briefly...
+    const GHOST_MS = 1200;   // ...then drains away
+    let anim = { fillFrom: 100, ghostFrom: 100, target: 100, start: 0 };
+    let running = false;
+
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+    const easeInOut = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+    function widthsAt(now) {
+        const e = now - anim.start;
+        const f = Math.min(1, e / FILL_MS);
+        const g = Math.min(1, Math.max(0, (e - GHOST_DELAY) / GHOST_MS));
+        return {
+            fill: anim.fillFrom + (anim.target - anim.fillFrom) * easeOut(f),
+            ghost: anim.ghostFrom + (anim.target - anim.ghostFrom) * easeInOut(g),
+            done: e >= GHOST_DELAY + GHOST_MS
+        };
+    }
+
+    // Draws the current animation state onto whatever bar is on screen now.
+    // Returns true once the animation has finished.
+    function apply() {
+        const fill = statsDiv.querySelector('.health-bar-fill');
+        const w = widthsAt(performance.now());
+        if (!fill) return w.done;
+        const container = fill.parentElement;
+        let ghost = container.querySelector('.health-ghost');
+
+        if (w.done) {
+            fill.style.width = `${anim.target}%`;
+            if (ghost) ghost.remove();
+            return true;
+        }
+        fill.style.transition = 'background-color 0.3s ease';
+        fill.style.width = `${w.fill}%`;
+        if (w.ghost > w.fill + 0.1) {
+            if (!ghost) {
+                ghost = document.createElement('div');
+                ghost.className = 'health-ghost';
+                container.appendChild(ghost);
+            }
+            ghost.style.width = `${w.ghost}%`;
+        } else if (ghost) {
+            ghost.remove();
+        }
+        return false;
+    }
+
+    function frame() {
+        if (apply()) {
+            running = false;
+        } else {
+            requestAnimationFrame(frame);
+        }
+    }
+
+    function onStatsRebuilt() {
+        const fill = statsDiv.querySelector('.health-bar-fill');
+        if (!fill) return;
+        const target = parseFloat(fill.style.width);
+        if (isNaN(target)) return;
+
+        if (target !== anim.target) {
+            const now = performance.now();
+            const current = running ? widthsAt(now) : { fill: anim.target, ghost: anim.target };
+            anim = {
+                fillFrom: current.fill,
+                ghostFrom: Math.max(current.ghost, current.fill),
+                target,
+                start: now
+            };
+            if (target < current.fill) {
+                fill.parentElement.classList.add('hit');
+            }
+        }
+
+        // Paint immediately so the freshly rebuilt bar never flashes the final width.
+        const done = apply();
+        if (!done && !running) {
+            running = true;
+            requestAnimationFrame(frame);
+        }
+    }
+
+    new MutationObserver(onStatsRebuilt).observe(statsDiv, { childList: true });
 })();

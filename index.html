@@ -230,23 +230,20 @@
             .player-preview img, .player-preview::after, .start-content { animation: none; }
         }
 
-        /* ================= Game (HUD + canvas as one card) ================= */
+        /* ================= Game (no frame: HUD floats above an open play area) ================= */
         .game-shell {
             display: flex;
             flex-direction: column;
+            gap: 4px;
         }
 
         #gameStats {
             width: 804px; /* canvas 800px + 2px border each side */
-            height: 48px;
+            height: 40px;
             display: flex;
             align-items: center;
             gap: 28px;
-            padding: 0 20px;
-            background: var(--panel);
-            border: 2px solid var(--line);
-            border-bottom: none;
-            border-radius: 16px 16px 0 0;
+            padding: 0 4px;
             font-size: 13px;
             color: var(--muted);
             font-variant-numeric: tabular-nums;
@@ -287,6 +284,7 @@
             gap: 10px;
         }
         .health-bar-container {
+            position: relative;
             width: 112px;
             height: 6px;
             background: rgba(255, 255, 255, 0.08);
@@ -294,9 +292,25 @@
             overflow: hidden;
         }
         .health-bar-fill {
+            position: relative;
+            z-index: 1;
             height: 100%;
             border-radius: 999px;
             transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        /* Added by ui.js: the chunk of health just lost, draining away slowly */
+        .health-ghost {
+            position: absolute;
+            inset: 0 auto 0 0;
+            border-radius: 999px;
+            background: rgba(248, 113, 113, 0.7);
+        }
+        .health-bar-container.hit {
+            animation: hitFlash 0.5s ease-out;
+        }
+        @keyframes hitFlash {
+            0% { box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.45); }
+            100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
         }
         .final-sprint {
             color: #fbbf24;
@@ -312,12 +326,18 @@
         canvas {
             display: block;
             margin: 0;
-            border: 2px solid var(--line);
-            border-radius: 0 0 16px 16px;
+            border: 2px solid transparent;
             cursor: none;
-            background:
-                radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 24px 24px,
-                #0f0f11;
+            background: transparent;
+            /* soft edges so blocks fade in and out instead of popping at a hard line */
+            -webkit-mask-image:
+                linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent),
+                linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+            -webkit-mask-composite: source-in;
+            mask-image:
+                linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent),
+                linear-gradient(to bottom, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+            mask-composite: intersect;
         }
 
         /* ================= Loading overlay ================= */

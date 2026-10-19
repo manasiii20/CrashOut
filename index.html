@@ -60,7 +60,7 @@
             width: 100%;
             max-width: 1040px;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
             align-items: center;
             gap: 48px;
         }
@@ -87,33 +87,71 @@
             color: var(--muted);
         }
 
-        .rules {
-            margin: 36px 0 0;
-            padding: 0;
+        .how-to {
             width: 100%;
-            max-width: 440px;
-            display: grid;
-            grid-template-columns: 72px 1fr;
-            row-gap: 14px;
-            font-size: 15px;
-            line-height: 1.5;
+            margin-top: 36px;
         }
-        .rules dt {
+        .how-to-label {
+            margin: 0 0 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .step {
+            padding: 18px 18px 20px;
+            border-left: 1px solid var(--line);
+        }
+        .step:first-child { border-left: none; }
+        .step-num {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--faint);
+            font-variant-numeric: tabular-nums;
+        }
+        .step h2 {
             display: flex;
             align-items: center;
             gap: 8px;
+            margin: 0 0 6px;
             font-family: var(--font-display);
+            font-size: 16px;
             font-weight: 700;
             color: var(--text);
         }
-        .rules dd {
+        .step p {
             margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
             color: var(--muted);
         }
-        .rules .danger { color: var(--danger); }
+        .swatch {
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            background: var(--danger);
+            flex: none;
+        }
+        .tip {
+            margin: 14px 0 0;
+            font-size: 13px;
+            color: var(--faint);
+        }
+        .tip strong { color: var(--muted); font-weight: 600; }
 
         .actions {
-            margin-top: 40px;
+            margin-top: 32px;
             display: flex;
             align-items: center;
             gap: 20px;
@@ -185,6 +223,9 @@
 
         @media (max-width: 860px) {
             .start-inner { grid-template-columns: 1fr; gap: 8px; }
+            .steps { grid-template-columns: 1fr; }
+            .step { border-left: none; border-top: 1px solid var(--line); }
+            .step:first-child { border-top: none; }
             .player-preview { order: -1; height: 240px; }
             .player-preview img { max-width: 280px; }
             .player-preview::after { bottom: 56px; width: 150px; margin-left: -75px; }
@@ -328,14 +369,27 @@
                 <h1>CrashOut</h1>
                 <p class="game-brief">Clear the screen of blocks before the clock runs out.</p>
 
-                <dl class="rules">
-                    <dt>Move</dt>
-                    <dd>Your frog follows the mouse.</dd>
-                    <dt>Push</dt>
-                    <dd>Shove blocks off screen. Quick flicks push harder.</dd>
-                    <dt>Dodge</dt>
-                    <dd><span class="danger">Red blocks</span> chase you. Fast hits cost health.</dd>
-                </dl>
+                <div class="how-to">
+                    <p class="how-to-label">How to play</p>
+                    <div class="steps">
+                        <div class="step">
+                            <span class="step-num">01</span>
+                            <h2>Move</h2>
+                            <p>Your frog follows the mouse.</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">02</span>
+                            <h2>Push</h2>
+                            <p>Shove every block off the screen before time is up.</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-num">03</span>
+                            <h2><span class="swatch"></span>Dodge</h2>
+                            <p>Red blocks chase you. Fast hits cost health.</p>
+                        </div>
+                    </div>
+                    <p class="tip"><strong>Tip:</strong> quick mouse flicks push blocks harder.</p>
+                </div>
 
                 <div class="actions">
                     <button id="startButton">Play</button>

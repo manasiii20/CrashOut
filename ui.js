@@ -51,7 +51,7 @@
         setSpacing(0);
     }
 
-    // ---- Blocks: same size, colour, rotation and scale, softer look ----
+    // ---- Blocks: same size, colour, rotation and scale, with a soft shadow ----
     Block.prototype.draw = function () {
         ctx.save();
         ctx.translate(this.x, this.y);
@@ -63,20 +63,17 @@
 
         const w = this.width;
         const h = this.height;
-        const r = Math.min(6, w / 4, h / 4);
 
         ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
         ctx.shadowBlur = 12;
         ctx.shadowOffsetY = 4;
         ctx.fillStyle = this.color;
-        roundedRect(-w / 2, -h / 2, w, h, r);
-        ctx.fill();
+        ctx.fillRect(-w / 2, -h / 2, w, h);
 
         ctx.shadowColor = 'transparent';
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
         ctx.lineWidth = 1;
-        roundedRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1, r);
-        ctx.stroke();
+        ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
 
         ctx.restore();
     };

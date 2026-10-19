@@ -58,11 +58,11 @@
         }
         .start-inner {
             width: 100%;
-            max-width: 1040px;
+            max-width: 860px;
             display: grid;
-            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+            grid-template-columns: minmax(0, 1fr) 260px;
             align-items: center;
-            gap: 48px;
+            gap: 56px;
         }
         .start-content {
             display: flex;
@@ -74,26 +74,26 @@
         #startScreen h1 {
             margin: 0;
             font-family: var(--font-display);
-            font-size: 72px;
+            font-size: 44px;
             font-weight: 700;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.02em;
             line-height: 1;
         }
         .game-brief {
-            margin: 16px 0 0;
+            margin: 10px 0 0;
             max-width: 460px;
-            font-size: 17px;
+            font-size: 15px;
             line-height: 1.6;
             color: var(--muted);
         }
 
         .how-to {
             width: 100%;
-            margin-top: 36px;
+            margin-top: 28px;
         }
         .how-to-label {
-            margin: 0 0 12px;
-            font-size: 12px;
+            margin: 0 0 10px;
+            font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -104,18 +104,18 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
             background: var(--panel);
             border: 1px solid var(--line);
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
         }
         .step {
-            padding: 18px 18px 20px;
+            padding: 14px 16px 16px;
             border-left: 1px solid var(--line);
         }
         .step:first-child { border-left: none; }
         .step-num {
             display: block;
-            margin-bottom: 10px;
-            font-size: 12px;
+            margin-bottom: 8px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--faint);
             font-variant-numeric: tabular-nums;
@@ -124,49 +124,43 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin: 0 0 6px;
+            margin: 0 0 4px;
             font-family: var(--font-display);
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--text);
         }
         .step p {
             margin: 0;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
+            min-height: 3em; /* every description occupies exactly two lines */
             color: var(--muted);
         }
-        .swatch {
-            width: 9px;
-            height: 9px;
-            border-radius: 2px;
-            background: var(--danger);
-            flex: none;
-        }
         .tip {
-            margin: 14px 0 0;
-            font-size: 13px;
+            margin: 12px 0 0;
+            font-size: 12px;
             color: var(--faint);
         }
         .tip strong { color: var(--muted); font-weight: 600; }
 
         .actions {
-            margin-top: 32px;
+            margin-top: 28px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 14px;
             flex-wrap: wrap;
         }
         #startButton {
-            height: 48px;
-            min-width: 160px;
-            padding: 0 28px;
+            height: 40px;
+            min-width: 112px;
+            padding: 0 22px;
             border: none;
-            border-radius: var(--radius);
+            border-radius: 10px;
             background: var(--accent);
             color: #0b0b0c;
             font-family: var(--font-display);
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             transition: background 0.15s ease;
@@ -185,11 +179,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 420px;
+            height: 260px;
         }
         .player-preview img {
             width: 100%;
-            max-width: 400px;
+            max-width: 260px;
             height: auto;
             animation: hop 2.4s ease-in-out infinite;
         }
@@ -197,10 +191,10 @@
             content: "";
             position: absolute;
             left: 50%;
-            bottom: 110px;
-            width: 200px;
-            height: 16px;
-            margin-left: -100px;
+            bottom: 70px;
+            width: 130px;
+            height: 12px;
+            margin-left: -65px;
             border-radius: 50%;
             background: rgba(0, 0, 0, 0.7);
             filter: blur(8px);
@@ -210,7 +204,7 @@
 
         @keyframes hop {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-28px); }
+            50% { transform: translateY(-18px); }
         }
         @keyframes hopShadow {
             0%, 100% { transform: scaleX(1); opacity: 1; }
@@ -226,11 +220,11 @@
             .steps { grid-template-columns: 1fr; }
             .step { border-left: none; border-top: 1px solid var(--line); }
             .step:first-child { border-top: none; }
-            .player-preview { order: -1; height: 240px; }
-            .player-preview img { max-width: 280px; }
-            .player-preview::after { bottom: 56px; width: 150px; margin-left: -75px; }
+            .player-preview { order: -1; height: 180px; }
+            .player-preview img { max-width: 200px; }
+            .player-preview::after { bottom: 46px; width: 100px; margin-left: -50px; }
             #startScreen { align-items: flex-start; }
-            #startScreen h1 { font-size: 56px; }
+            #startScreen h1 { font-size: 38px; }
         }
         @media (prefers-reduced-motion: reduce) {
             .player-preview img, .player-preview::after, .start-content { animation: none; }
@@ -244,7 +238,7 @@
 
         #gameStats {
             width: 804px; /* canvas 800px + 2px border each side */
-            height: 56px;
+            height: 48px;
             display: flex;
             align-items: center;
             gap: 28px;
@@ -253,7 +247,7 @@
             border: 2px solid var(--line);
             border-bottom: none;
             border-radius: 16px 16px 0 0;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--muted);
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
@@ -265,7 +259,7 @@
             align-items: center;
             gap: 8px;
             font-family: var(--font-display);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.06em;
             background: none !important;
@@ -282,7 +276,7 @@
         .timer #timer,
         .score #score {
             font-family: var(--font-display);
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--text);
         }
@@ -375,17 +369,17 @@
                         <div class="step">
                             <span class="step-num">01</span>
                             <h2>Move</h2>
-                            <p>Your frog follows the mouse.</p>
+                            <p>Your frog follows the mouse cursor.</p>
                         </div>
                         <div class="step">
                             <span class="step-num">02</span>
                             <h2>Push</h2>
-                            <p>Shove every block off the screen before time is up.</p>
+                            <p>Push blocks off before time is up.</p>
                         </div>
                         <div class="step">
                             <span class="step-num">03</span>
-                            <h2><span class="swatch"></span>Dodge</h2>
-                            <p>Red blocks chase you. Fast hits cost health.</p>
+                            <h2>Dodge</h2>
+                            <p>Red blocks chase you. Hits cost health.</p>
                         </div>
                     </div>
                     <p class="tip"><strong>Tip:</strong> quick mouse flicks push blocks harder.</p>
@@ -393,7 +387,7 @@
 
                 <div class="actions">
                     <button id="startButton">Play</button>
-                    <span class="start-hint">5 stages · Mouse required</span>
+                    <span class="start-hint">5 stages</span>
                 </div>
             </div>
             <div class="player-preview">

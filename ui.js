@@ -92,7 +92,7 @@
 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        text(label, canvas.width / 2, y + BUTTON_HEIGHT / 2 + 1, display(700, 15), '#0b0b0c');
+        text(label, canvas.width / 2, y + BUTTON_HEIGHT / 2 + 1, display(700, 14), '#0b0b0c');
     };
 
     // ---- Stage clear / game complete ----
@@ -108,7 +108,7 @@
         ctx.textBaseline = 'middle';
 
         text(`STAGE ${stage.number} OF ${STAGES.length}`, cx, cy - 120, display(700, 12), stage.color, 1.5);
-        text(isLastStage ? 'You beat CrashOut' : 'Stage clear', cx, cy - 78, display(700, 40), TEXT, -1);
+        text(isLastStage ? 'You beat CrashOut' : 'Stage clear', cx, cy - 74, display(700, 32), TEXT, -0.5);
 
         // Stats
         const stats = [
@@ -118,7 +118,7 @@
         stats.forEach(([label, value], i) => {
             const x = cx + (i === 0 ? -70 : 70);
             text(label, x, cy - 10, body(600, 11), FAINT, 1.2);
-            text(value, x, cy + 20, display(700, 28), TEXT);
+            text(value, x, cy + 18, display(700, 24), TEXT);
         });
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
@@ -139,14 +139,14 @@
         ctx.textBaseline = 'middle';
 
         text('GAME OVER', cx, cy - 135, display(700, 12), DANGER, 1.5);
-        text(`${score}`, cx, cy - 90, display(700, 56), TEXT, -1);
-        text('POINTS', cx, cy - 52, body(600, 11), FAINT, 1.2);
+        text(`${score}`, cx, cy - 92, display(700, 44), TEXT, -0.5);
+        text('POINTS', cx, cy - 60, body(600, 11), FAINT, 1.2);
 
         if (endScreenMessageStart === 0) {
             endScreenMessageStart = Date.now();
         }
 
-        text("The clutter you just cleared? That's your mind under pressure.", cx, cy + 5, body(500, 16), TEXT);
+        text("The clutter you just cleared? That's your mind under pressure.", cx, cy + 5, body(500, 15), TEXT);
 
         const timeSinceEnd = Date.now() - endScreenMessageStart;
         if (timeSinceEnd >= 2000) {
@@ -156,7 +156,7 @@
         if (showSecondMessage) {
             const opacity = Math.min(1, (timeSinceEnd - 2000) / 1000);
             text("Now that you've cleared the screen — let's clear your head.", cx, cy + 35,
-                 body(400, 16), `rgba(161, 161, 170, ${opacity})`);
+                 body(400, 15), `rgba(161, 161, 170, ${opacity})`);
         }
 
         drawRestartButton(MUTED, 'Back to Menu');

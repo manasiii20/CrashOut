@@ -258,4 +258,329 @@
     }
 
     new MutationObserver(onStatsRebuilt).observe(statsDiv, { childList: true });
+
+    // ---- Scoreboard extras: time bar in the stage colour, low-time state ----
+    const shell = document.querySelector('.game-shell');
+    const timeFill = document.getElementById('timeFill');
+    let lastTimeKey = '';
+
+    function updateTimeBar() {
+        const stage = STAGES[currentStage];
+        const key = `${currentStage}:${timeLeft}`;
+        if (key === lastTimeKey) return;
+        const prev = lastTimeKey;
+        lastTimeKey = key;
+
+        const pct = Math.max(0, Math.min(1, timeLeft / stage.timeLimit)) * 100;
+        // Refills (new stage / restart) snap; countdown slides.
+        const refill = prev && Number(prev.split(':')[1]) < timeLeft;
+        timeFill.style.transition = refill ? 'none' : '';
+        timeFill.style.width = `${pct}%`;
+        timeFill.style.backgroundColor = stage.color;
+        shell.classList.toggle('low-time', timeLeft <= 5 && !gameOver && !gameWon);
+    }
+
+    // ---- Impact effects on the frog ----
+    // Purely visual. Contact uses the game's own collision test; damage is
+    // detected by watching playerHealth, which only game.js changes.
+    const particles = [];
+    const rings = [];
+    const popups = [];
+    let touching = new Set();
+    let lastHealth = playerHealth;
+    let damageAt = -1e9;
+    let bumpAt = -1e9;
+
+    // Red silhouette of the frog, used for the hit flash
+    const tint = document.createElement('canvas');
+    const tintCtx = tint.getContext('2d');
+    function buildTint() {
+        tint.width = player.width;
+        tint.height = player.height;
+        tintCtx.clearRect(0, 0, tint.width, tint.height);
+        tintCtx.drawImage(playerImage, 0, 0, tint.width, tint.height);
+        tintCtx.globalCompositeOperation = 'source-atop';
+        tintCtx.fillStyle = '#ff4d4d';
+        tintCtx.fillRect(0, 0, tint.width, tint.height);
+        tintCtx.globalCompositeOperation = 'source-over';
+    }
+    if (playerImage.complete) buildTint(); else playerImage.addEventListener('load', buildTint);
+
+    function burst(x, y, color, count, speed) {
+        for (let i = 0; i < count; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const v = speed * (0.4 + Math.random() * 0.8);
+            particles.push({
+                x0: x, y0: y,
+                vx: Math.cos(a) * v,
+                vy: Math.sin(a) * v,
+                size: 3 + Math.random() * 4,
+                rot: Math.random() * Math.PI,
+                vr: (Math.random() - 0.5) * 0.3,
+                color,
+                born: performance.now(),
+                life: 380 + Math.random() * 260
+            });
+        }
+    }
+
+    function playing() {
+        return gameStarted && !gameOver && !gameWon && !isDeathAnimating;
+    }
+
+    function detectImpacts(now) {
+        if (playerHealth < lastHealth && gameStarted) {
+            const lost = Math.round(((lastHealth - playerHealth) / player.maxHealth) * 100);
+            damageAt = now;
+            rings.push({ x: player.x, y: player.y, born: now, life: 500, color: '248, 113, 113', max: 90 });
+            burst(player.x, player.y, 'rgba(255, 90, 90, 0.95)', 14, 5);
+            popups.push({ text: `−${lost}%`, x: player.x + 36, y: player.y - 46, born: now, life: 900 });
+        }
+        lastHealth = playerHealth;
+
+        if (!playing()) {
+            touching = new Set();
+            return;
+        }
+        const now_touching = new Set();
+        for (const block of blocks) {
+            if (block.checkCollision(player.x, player.y, player.radius)) {
+                now_touching.add(block);
+                if (!touching.has(block)) {
+                    const mx = (block.x + player.x) / 2;
+                    const my = (block.y + player.y) / 2;
+                    burst(mx, my, block.color, 6, 3);
+                    rings.push({ x: mx, y: my, born: now, life: 320, color: '255, 255, 255', max: 34 });
+                    bumpAt = now;
+                }
+            }
+        }
+        touching = now_touching;
+    }
+
+    function drawImpacts(now) {
+        ctx.save();
+        ctx.shadowColor = 'transparent';
+
+        // red halo around the frog when health is lost
+        const dt = now - damageAt;
+        if (dt < 550 && playing()) {
+            const a = 0.35 * (1 - dt / 550);
+            const g = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, 150);
+            g.addColorStop(0, `rgba(248, 113, 113, ${a})`);
+            g.addColorStop(1, 'rgba(248, 113, 113, 0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(player.x - 150, player.y - 150, 300, 300);
+        }
+
+        // frog flash: strong red on damage, faint on a plain bump
+        if (playing() && tint.width) {
+            let alpha = 0;
+            if (dt < 450) alpha = 0.75 * (1 - dt / 450);
+            else if (now - bumpAt < 160) alpha = 0.25 * (1 - (now - bumpAt) / 160);
+            if (alpha > 0) {
+                ctx.globalAlpha = alpha;
+                ctx.drawImage(tint, player.x - player.width / 2, player.y - player.height / 2,
+                              player.width, player.height);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        for (let i = rings.length - 1; i >= 0; i--) {
+            const r = rings[i];
+            const t = (now - r.born) / r.life;
+            if (t >= 1) { rings.splice(i, 1); continue; }
+            ctx.strokeStyle = `rgba(${r.color}, ${0.6 * (1 - t)})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, 8 + r.max * easeOut(t), 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            const t = (now - p.born) / p.life;
+            if (t >= 1) { particles.splice(i, 1); continue; }
+            // time-based so it looks the same however often draw() runs per frame
+            const f = (now - p.born) / 16.67;
+            const travel = (1 - Math.pow(0.92, f)) / 0.08;
+            ctx.save();
+            ctx.globalAlpha = 1 - t;
+            ctx.translate(p.x0 + p.vx * travel, p.y0 + p.vy * travel);
+            ctx.rotate(p.rot + p.vr * f);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.restore();
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = popups.length - 1; i >= 0; i--) {
+            const p = popups[i];
+            const t = (now - p.born) / p.life;
+            if (t >= 1) { popups.splice(i, 1); continue; }
+            ctx.globalAlpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+            ctx.font = display(700, 18);
+            ctx.fillStyle = DANGER;
+            ctx.fillText(p.text, p.x, p.y - 26 * easeOut(t));
+        }
+        ctx.restore();
+    }
+
+    // Run after game.js has drawn each frame. The original draw() runs unchanged.
+    const drawGame = draw;
+    draw = function () {
+        drawGame();
+        const now = performance.now();
+        updateTimeBar();
+        detectImpacts(now);
+        if (gameOver || gameWon) {
+            particles.length = 0;
+            rings.length = 0;
+            popups.length = 0;
+            damageAt = -1e9;
+            return;
+        }
+        drawImpacts(now);
+    };
+
+    // ---- Start screen preview: blocks drifting around the frog ----
+    const demo = document.getElementById('demoCanvas');
+    const dctx = demo.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const DEMO_COLORS = [
+        { color: 'hsla(200, 70%, 50%, 0.8)', chase: false },
+        { color: 'hsla(200, 70%, 50%, 0.8)', chase: false },
+        { color: 'hsla(120, 70%, 50%, 0.8)', chase: false },
+        { color: 'hsla(30, 100%, 50%, 0.8)', chase: true },
+        { color: 'hsla(0, 100%, 50%, 0.8)', chase: true }
+    ];
+    let demoBlocks = [];
+    const demoSparks = [];
+    let dw = 0;
+    let dh = 0;
+
+    function makeDemoBlock(w, h) {
+        const kind = DEMO_COLORS[Math.floor(Math.random() * DEMO_COLORS.length)];
+        const a = Math.random() * Math.PI * 2;
+        const speed = 0.25 + Math.random() * 0.45;
+        return {
+            x: Math.random() * w,
+            y: Math.random() * h,
+            w: (30 + Math.random() * 40) * BLOCK_DRAW_SCALE,
+            h: (20 + Math.random() * 30) * BLOCK_DRAW_SCALE,
+            vx: Math.cos(a) * speed,
+            vy: Math.sin(a) * speed,
+            rot: Math.random() * Math.PI * 2,
+            vr: (Math.random() - 0.5) * 0.01,
+            color: kind.color,
+            chase: kind.chase
+        };
+    }
+
+    function sizeDemo() {
+        const rect = demo.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        if (!rect.width || !rect.height) return false;
+        if (rect.width !== dw || rect.height !== dh) {
+            dw = rect.width;
+            dh = rect.height;
+            demo.width = Math.round(dw * dpr);
+            demo.height = Math.round(dh * dpr);
+            dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const count = Math.round(Math.min(26, Math.max(10, (dw * dh) / 26000)));
+            demoBlocks = [];
+            for (let i = 0; i < count; i++) {
+                const b = makeDemoBlock(dw, dh);
+                // keep the frog's spot clear at the start
+                if (Math.hypot(b.x - dw / 2, b.y - dh / 2) < 140) b.x = (b.x + dw / 2) % dw;
+                demoBlocks.push(b);
+            }
+        }
+        return true;
+    }
+
+    function stepDemo() {
+        const cx = dw / 2;
+        const cy = dh / 2;
+        for (const b of demoBlocks) {
+            if (b.chase) {
+                const dx = cx - b.x;
+                const dy = cy - b.y;
+                const d = Math.hypot(dx, dy) || 1;
+                b.vx += (dx / d) * 0.012;
+                b.vy += (dy / d) * 0.012;
+            }
+            const sp = Math.hypot(b.vx, b.vy);
+            const max = b.chase ? 1.1 : 0.7;
+            if (sp > max) { b.vx *= max / sp; b.vy *= max / sp; }
+            b.x += b.vx;
+            b.y += b.vy;
+            b.rot += b.vr;
+
+            // the frog shoves anything that gets too close
+            const dx = b.x - cx;
+            const dy = b.y - cy;
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < 85) {
+                b.vx = (dx / d) * 3.2;
+                b.vy = (dy / d) * 3.2;
+                for (let i = 0; i < 6; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    demoSparks.push({ x: b.x, y: b.y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2,
+                                      color: b.color, born: performance.now(), size: 3 + Math.random() * 3 });
+                }
+            }
+            // ease back to drifting speed
+            if (sp > max) { b.vx *= 0.985; b.vy *= 0.985; }
+
+            const m = 60;
+            if (b.x < -m) b.x = dw + m;
+            if (b.x > dw + m) b.x = -m;
+            if (b.y < -m) b.y = dh + m;
+            if (b.y > dh + m) b.y = -m;
+        }
+    }
+
+    function drawDemo() {
+        dctx.clearRect(0, 0, dw, dh);
+        for (const b of demoBlocks) {
+            dctx.save();
+            dctx.translate(b.x, b.y);
+            dctx.rotate(b.rot);
+            dctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+            dctx.shadowBlur = 12;
+            dctx.shadowOffsetY = 4;
+            dctx.fillStyle = b.color;
+            dctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+            dctx.shadowColor = 'transparent';
+            dctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+            dctx.lineWidth = 1;
+            dctx.strokeRect(-b.w / 2 + 0.5, -b.h / 2 + 0.5, b.w - 1, b.h - 1);
+            dctx.restore();
+        }
+        const now = performance.now();
+        for (let i = demoSparks.length - 1; i >= 0; i--) {
+            const s = demoSparks[i];
+            const t = (now - s.born) / 500;
+            if (t >= 1) { demoSparks.splice(i, 1); continue; }
+            s.x += s.vx;
+            s.y += s.vy;
+            s.vx *= 0.93;
+            s.vy *= 0.93;
+            dctx.globalAlpha = 1 - t;
+            dctx.fillStyle = s.color;
+            dctx.fillRect(s.x - s.size / 2, s.y - s.size / 2, s.size, s.size);
+            dctx.globalAlpha = 1;
+        }
+    }
+
+    function demoLoop() {
+        if (startScreen.style.display !== 'none' && sizeDemo()) {
+            if (!reduceMotion) stepDemo();
+            drawDemo();
+        }
+        requestAnimationFrame(demoLoop);
+    }
+    requestAnimationFrame(demoLoop);
 })();
